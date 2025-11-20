@@ -87,10 +87,22 @@ jobs:
 
       - name: Verify application starts
         run: |
-          timeout 10 npm start &
-          sleep 3
-          curl -f http://localhost:3000/health || echo "Health check completed"
-          kill %1 2>/dev/null || true
+          npm start & echo $! > app.pid
+          SUCCESS=0
+          for i in {1..20}; do
+            if curl -fsS http://localhost:3000/health > /dev/null; then
+              echo "Health OK"
+              SUCCESS=1
+              break
+            fi
+            echo "Waiting for app to start... ($i/20)"
+            sleep 1
+          done
+          kill $(cat app.pid) || true
+          if [ "$SUCCESS" -ne 1 ]; then
+            echo "Health check failed"
+            exit 1
+          fi
 
       - name: Archive build artifacts
         uses: actions/upload-artifact@v3
