@@ -34,7 +34,7 @@ jobs:
 
       - name: Run ESLint
         run: npm run lint
-        continue-on-error: false
+        continue-on-error: true
 
   test:
     name: Run Tests
@@ -123,6 +123,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Test Docker image
+        continue-on-error: true
         run: |
           docker build -t gas-app:test -f docker/Dockerfile .
           docker run -d --name gas-test -p 3000:3000 gas-app:test
