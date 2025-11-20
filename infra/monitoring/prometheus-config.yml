@@ -1,0 +1,82 @@
+# Prometheus Configuration for GAS Project
+
+global:
+  scrape_interval: 15s # Scrape targets every 15 seconds
+  evaluation_interval: 15s # Evaluate rules every 15 seconds
+  external_labels:
+    cluster: 'gas-project'
+    environment: 'local'
+
+# Alertmanager configuration (optional)
+# alerting:
+#   alertmanagers:
+#     - static_configs:
+#         - targets:
+#           - alertmanager:9093
+
+# Load rules once and periodically evaluate them
+# rule_files:
+#   - "alerts.yml"
+
+# Scrape configurations
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+        labels:
+          service: 'prometheus'
+
+  # Main application - Stable
+  - job_name: 'gas-app-stable'
+    scrape_interval: 10s
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['app-stable:3000']
+        labels:
+          service: 'gas-app'
+          deployment: 'stable'
+          environment: 'local'
+
+  # Blue-Green Deployment - Blue instance
+  - job_name: 'gas-app-blue'
+    scrape_interval: 10s
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['app-blue:3000']
+        labels:
+          service: 'gas-app'
+          deployment: 'blue'
+          environment: 'local'
+
+  # Blue-Green Deployment - Green instance
+  - job_name: 'gas-app-green'
+    scrape_interval: 10s
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['app-green:3000']
+        labels:
+          service: 'gas-app'
+          deployment: 'green'
+          environment: 'local'
+
+  # Canary Deployment - Canary instance
+  - job_name: 'gas-app-canary'
+    scrape_interval: 10s
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['app-canary:3000']
+        labels:
+          service: 'gas-app'
+          deployment: 'canary'
+          environment: 'local'
+
+  # Health check monitoring
+  - job_name: 'gas-app-health'
+    scrape_interval: 30s
+    metrics_path: '/health'
+    static_configs:
+      - targets: ['app-stable:3000']
+        labels:
+          service: 'gas-app-health'
+          deployment: 'stable'

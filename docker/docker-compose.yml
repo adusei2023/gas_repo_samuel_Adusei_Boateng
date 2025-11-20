@@ -1,0 +1,147 @@
+version: '3.8'
+
+services:
+  # Main application - Stable version
+  app-stable:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: gas-app-stable
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DEPLOYMENT_TYPE=stable
+      - LOG_LEVEL=info
+    networks:
+      - gas-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health/live', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+  # Blue-Green Deployment - Blue instance
+  app-blue:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: gas-app-blue
+    ports:
+      - "3001:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DEPLOYMENT_TYPE=blue
+      - LOG_LEVEL=info
+    networks:
+      - gas-network
+    restart: unless-stopped
+    profiles:
+      - blue-green
+
+  # Blue-Green Deployment - Green instance
+  app-green:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: gas-app-green
+    ports:
+      - "3002:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DEPLOYMENT_TYPE=green
+      - LOG_LEVEL=info
+    networks:
+      - gas-network
+    restart: unless-stopped
+    profiles:
+      - blue-green
+
+  # Canary Deployment - Canary instance
+  app-canary:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: gas-app-canary
+    ports:
+      - "3003:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DEPLOYMENT_TYPE=canary
+      - LOG_LEVEL=info
+    networks:
+      - gas-network
+    restart: unless-stopped
+    profiles:
+      - canary
+
+  # Prometheus - Metrics collection
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: gas-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ../infra/monitoring/prometheus-config.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    networks:
+      - gas-network
+    restart: unless-stopped
+
+  # Grafana - Metrics visualization
+  grafana:
+    image: grafana/grafana:latest
+    container_name: gas-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_INSTALL_PLUGINS=
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ../infra/monitoring/grafana-dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ../infra/monitoring/grafana-dashboards/datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml:ro
+    networks:
+      - gas-network
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+
+  # Load Balancer (nginx) for canary deployments
+  nginx:
+    image: nginx:alpine
+    container_name: gas-nginx
+    ports:
+      - "8080:80"
+    volumes:
+      - ../infra/monitoring/nginx.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - gas-network
+    restart: unless-stopped
+    profiles:
+      - canary
+    depends_on:
+      - app-stable
+      - app-canary
+
+networks:
+  gas-network:
+    driver: bridge
+
+volumes:
+  prometheus-data:
+  grafana-data:

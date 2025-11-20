@@ -1,0 +1,139 @@
+name: Canary Deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      traffic_percentage:
+        description: 'Percentage of traffic to canary (1-100)'
+        required: true
+        default: '10'
+        type: string
+
+env:
+  NODE_VERSION: '18'
+  AZURE_WEBAPP_NAME: gas-app-production
+
+jobs:
+  deploy-canary:
+    name: Deploy Canary Version
+    runs-on: ubuntu-latest
+    environment:
+      name: production-canary
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Azure Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.ACR_LOGIN_SERVER }}
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      - name: Build and push canary image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./docker/Dockerfile
+          push: true
+          tags: ${{ secrets.ACR_LOGIN_SERVER }}/gas-app:canary-${{ github.sha }}
+          build-args: |
+            NODE_ENV=production
+            DEPLOYMENT_TYPE=canary
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy to canary slot
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          slot-name: canary
+          images: ${{ secrets.ACR_LOGIN_SERVER }}/gas-app:canary-${{ github.sha }}
+
+      - name: Configure traffic routing
+        run: |
+          az webapp traffic-routing set \
+            --name ${{ env.AZURE_WEBAPP_NAME }} \
+            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
+            --distribution canary=${{ github.event.inputs.traffic_percentage }}
+
+      - name: Wait for canary to stabilize
+        run: sleep 30
+
+      - name: Health check canary
+        run: |
+          CANARY_URL="https://${{ env.AZURE_WEBAPP_NAME }}-canary.azurewebsites.net"
+          for i in {1..10}; do
+            if curl -f -s "$CANARY_URL/health" > /dev/null; then
+              echo "✅ Canary health check passed"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "❌ Canary health check failed"
+          exit 1
+
+  monitor-canary:
+    name: Monitor Canary Metrics
+    runs-on: ubuntu-latest
+    needs: deploy-canary
+
+    steps:
+      - name: Monitor for 5 minutes
+        run: |
+          echo "🔍 Monitoring canary deployment for 5 minutes..."
+          echo "Check Grafana dashboard for canary comparison metrics"
+          echo "URL: http://localhost:3001 (if running locally)"
+          sleep 300
+
+      - name: Canary monitoring complete
+        run: |
+          echo "✅ Canary monitoring period complete"
+          echo "Review metrics before promoting to 100% or rolling back"
+
+  promote-canary:
+    name: Promote Canary to 100%
+    runs-on: ubuntu-latest
+    needs: monitor-canary
+    environment:
+      name: production-canary-promote
+
+    steps:
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Route 100% traffic to canary
+        run: |
+          az webapp traffic-routing set \
+            --name ${{ env.AZURE_WEBAPP_NAME }} \
+            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
+            --distribution canary=100
+
+      - name: Swap canary to production
+        run: |
+          az webapp deployment slot swap \
+            --name ${{ env.AZURE_WEBAPP_NAME }} \
+            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
+            --slot canary \
+            --target-slot production
+
+      - name: Reset traffic routing
+        run: |
+          az webapp traffic-routing clear \
+            --name ${{ env.AZURE_WEBAPP_NAME }} \
+            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }}
+
+      - name: Verify production
+        run: |
+          PROD_URL="https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net"
+          curl -f "$PROD_URL/health" || exit 1
+          echo "✅ Canary successfully promoted to production"
