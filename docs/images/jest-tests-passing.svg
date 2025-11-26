@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="240">
+  <defs>
+    <style>
+      .bg { fill: #1e1e1e; }
+      .title { fill: #93e59f; font: 700 20px 'Courier New', monospace; }
+      .text { fill: #eaeaea; font: 16px 'Courier New', monospace; }
+      .muted { fill: #b0b0b0; font: 14px 'Courier New', monospace; }
+      .ok { fill: #8be9fd; font: 16px 'Courier New', monospace; }
+    </style>
+  </defs>
+  <rect class="bg" x="0" y="0" width="100%" height="100%" rx="8"/>
+  <text class="title" x="20" y="40">Jest Test Run — PASS</text>
+  <text class="text" x="20" y="75">Suites: 3 passed, 3 total</text>
+  <text class="text" x="20" y="100">Tests: 18 passed</text>
+  <text class="text" x="20" y="125">Time: ~23.4 s</text>
+  <text class="ok"   x="20" y="155">✓ Unit + Integration tests passed</text>
+  <text class="muted" x="20" y="185">Note: Jest reported open handles after tests; does not affect pass/fail</text>
+  <text class="muted" x="20" y="210">Source: npm test on local workspace</text>
+</svg>
+

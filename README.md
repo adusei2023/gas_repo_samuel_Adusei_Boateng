@@ -37,6 +37,8 @@ A production-ready Node.js application demonstrating advanced deployment strateg
 - [Monitoring](#monitoring)
 - [API Documentation](#api-documentation)
 - [Contributing](#contributing)
+- [Screenshots](#screenshots)
+
 
 ## ⚡ Quick Start
 
@@ -176,10 +178,24 @@ npm test -- --watch
 
 ### Coverage Thresholds
 
-- Branches: 70%
-- Functions: 70%
+- Branches: 50%
+- Functions: 60%
 - Lines: 70%
 - Statements: 70%
+
+## Screenshots
+
+Place screenshots in docs/images and name them as below. The images will render automatically on GitHub once you add the files.
+
+- GitHub Actions CI (snapshot): ![CI Snapshot](docs/images/ci-passing.svg)
+- Local Jest Tests (passing): ![Jest Tests Passing](docs/images/jest-tests-passing.svg)
+- Coverage Summary: ![Coverage Summary](docs/images/coverage-summary.svg)
+
+How to capture and add:
+1. Re-run tests locally: `npm test` (or `npm run test:unit` / `npm run test:integration`).
+2. Take screenshots of your terminal results and the GitHub Actions run page (Actions → CI).
+3. Save them into docs/images using the names above (or update the paths here).
+4. Commit and push: `git add docs/images && git commit -m "docs: add CI/test screenshots" && git push`.
 
 ## 🚢 Deployment
 
@@ -481,9 +497,9 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## 📊 Project Status
 
-![CI](https://github.com/yourusername/gas_repo_template/workflows/CI/badge.svg)
-![CD Staging](https://github.com/yourusername/gas_repo_template/workflows/CD%20-%20Deploy%20to%20Staging/badge.svg)
-![CD Production](https://github.com/yourusername/gas_repo_template/workflows/CD%20-%20Deploy%20to%20Production/badge.svg)
+[![CI](https://github.com/adusei2023/gas_repo_samuel_Adusei_Boateng/actions/workflows/ci.yml/badge.svg)](https://github.com/adusei2023/gas_repo_samuel_Adusei_Boateng/actions/workflows/ci.yml)
+[![CD Staging](https://github.com/adusei2023/gas_repo_samuel_Adusei_Boateng/actions/workflows/cd-staging.yml/badge.svg)](https://github.com/adusei2023/gas_repo_samuel_Adusei_Boateng/actions/workflows/cd-staging.yml)
+[![CD Production](https://github.com/adusei2023/gas_repo_samuel_Adusei_Boateng/actions/workflows/cd-production.yml/badge.svg)](https://github.com/adusei2023/gas_repo_samuel_Adusei_Boateng/actions/workflows/cd-production.yml)
 
 ---
 

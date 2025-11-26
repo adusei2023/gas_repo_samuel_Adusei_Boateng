@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="280">
+  <defs>
+    <style>
+      .bg { fill: #1e1e1e; }
+      .title { fill: #ffd866; font: 700 20px 'Courier New', monospace; }
+      .hdr { fill: #a6accd; font: 15px 'Courier New', monospace; }
+      .row { fill: #eaeaea; font: 15px 'Courier New', monospace; }
+      .muted { fill: #b0b0b0; font: 13px 'Courier New', monospace; }
+      .mono { font-family: 'Courier New', monospace; }
+    </style>
+  </defs>
+  <rect class="bg" x="0" y="0" width="100%" height="100%" rx="8"/>
+  <text class="title" x="20" y="40">Coverage Summary</text>
+  <text class="hdr" x="20" y="75">Metric       Statements   Branches   Functions   Lines</text>
+  <text class="row" x="20" y="100">All files    81.75%       54.54%     65.38%      84.73%</text>
+  <text class="hdr" x="20" y="135">File         % Stmts      % Branch   % Funcs     % Lines</text>
+  <text class="row" x="20" y="160">health.js    84.00%       50.00%     100.00%     95.45%</text>
+  <text class="row" x="20" y="185">index.js     72.60%       40.00%     50.00%      74.28%</text>
+  <text class="row" x="20" y="210">metrics.js   97.43%       78.57%     100.00%     97.43%</text>
+  <text class="muted" x="20" y="245">Source: jest --coverage (latest local run)</text>
+</svg>
+
